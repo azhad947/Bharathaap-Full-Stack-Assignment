@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CATEGORIES } from "../lib/constants";
+import RoomTimeline from "./components/RoomTimeline";
 
 interface AvailableRoom {
   id: number;
@@ -26,6 +27,12 @@ interface Booking {
   checkOut: string;
   status: "confirmed" | "cancelled";
 }
+interface Room {
+  id: number;
+  number: string;
+  category: string;
+  status: "available" | "maintenance";
+}
 
 const categoryClass: Record<string, string> = {
   Standard: "badge-standard",
@@ -44,13 +51,17 @@ export default function Page() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   const loadBookings = useCallback(async () => {
     const res = await fetch("/api/bookings");
     if (res.ok) setBookings(await res.json());
   }, []);
 
-  useEffect(() => { loadBookings(); }, [loadBookings]);
+  useEffect(() => {
+    loadBookings();
+    fetch("/api/rooms").then((r) => { if (r.ok) r.json().then(setRooms); });
+  }, [loadBookings]);
 
   async function runSearch(ci = checkIn, co = checkOut, cat = category) {
     setError("");
@@ -211,6 +222,14 @@ export default function Page() {
               </div>
             </form>
           )}
+        </div>
+      )}
+
+      {/* Room timeline */}
+      {rooms.length > 0 && (
+        <div className="card">
+          <div className="card-title">14-day room timeline</div>
+          <RoomTimeline rooms={rooms} bookings={bookings} />
         </div>
       )}
 
